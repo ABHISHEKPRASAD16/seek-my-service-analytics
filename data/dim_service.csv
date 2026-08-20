@@ -1,0 +1,38 @@
+ServiceKey,ServiceCategory,ServiceName,BasePriceINR,AvgDurationMins,IsEmergency,SkillTier,MaterialCostPct,CommissionPct,ServiceSortOrder
+1,Carpenter,Furniture Repair,750,90,0,Silver,22.0,18.0,301
+2,Carpenter,Modular Kitchen Install,45000,600,0,Platinum,55.0,18.0,302
+3,Carpenter,Door and Window Fix,900,100,0,Silver,25.0,18.0,303
+4,Carpenter,Custom Woodwork,12000,420,0,Gold,45.0,18.0,304
+5,Carpenter,Bed and Sofa Assembly,800,90,0,Bronze,12.0,18.0,305
+6,Painter,Interior Painting,26000,1440,0,Gold,48.0,15.0,601
+7,Painter,Exterior Painting,38000,1800,0,Gold,52.0,15.0,602
+8,Painter,Wall Texture,9500,480,0,Gold,42.0,15.0,603
+9,Painter,Waterproofing,16000,600,0,Platinum,50.0,15.0,604
+10,Painter,Wood Polish,5500,360,0,Silver,38.0,15.0,605
+11,Plumber,Leak Repair,700,60,1,Silver,20.0,22.0,801
+12,Plumber,Tap and Mixer Install,450,45,0,Bronze,18.0,22.0,802
+13,Plumber,Bathroom Fitting,3200,240,0,Gold,40.0,22.0,803
+14,Plumber,Drain Unclogging,850,70,1,Silver,12.0,22.0,804
+15,Plumber,Water Tank Cleaning,1400,120,0,Bronze,10.0,22.0,805
+16,Electrician,Wiring Repair,900,90,1,Gold,25.0,20.0,501
+17,Electrician,Switchboard Install,1200,110,0,Silver,35.0,20.0,502
+18,Electrician,Fan and Light Install,550,55,0,Bronze,15.0,20.0,503
+19,Electrician,Inverter Setup,2400,180,0,Gold,30.0,20.0,504
+20,Electrician,MCB and Fuse Repair,650,60,1,Silver,22.0,20.0,505
+21,AC Service,AC Servicing,650,60,0,Silver,12.0,19.0,101
+22,AC Service,AC Install and Uninstall,1800,150,0,Gold,25.0,19.0,102
+23,AC Service,Gas Refill,2600,90,0,Gold,45.0,19.0,103
+24,AC Service,AC Repair,1500,100,1,Gold,32.0,19.0,104
+25,Deep Cleaning,Full Home Cleaning,5200,360,0,Silver,15.0,22.0,401
+26,Deep Cleaning,Bathroom Deep Clean,1200,120,0,Bronze,12.0,22.0,402
+27,Deep Cleaning,Kitchen Deep Clean,1900,180,0,Silver,14.0,22.0,403
+28,Deep Cleaning,Sofa and Carpet Shampoo,1600,150,0,Silver,16.0,22.0,404
+29,Pest Control,General Pest Treatment,1600,90,0,Silver,30.0,21.0,701
+30,Pest Control,Termite Treatment,6500,300,0,Gold,42.0,21.0,702
+31,Pest Control,Cockroach and Ant Control,1300,75,0,Bronze,28.0,21.0,703
+32,Pest Control,Bed Bug Treatment,3200,150,0,Gold,38.0,21.0,704
+33,Appliance Repair,Washing Machine Repair,1100,90,0,Silver,34.0,20.0,201
+34,Appliance Repair,Refrigerator Repair,1300,100,0,Gold,36.0,20.0,202
+35,Appliance Repair,Microwave Repair,850,70,0,Silver,32.0,20.0,203
+36,Appliance Repair,Geyser Repair,1050,80,1,Silver,30.0,20.0,204
+37,Appliance Repair,Chimney Service,1400,110,0,Silver,20.0,20.0,205

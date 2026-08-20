@@ -1,0 +1,9 @@
+ModelKey,ModelName,ModelType,BusinessPurpose,Framework,Algorithm,PrimaryMetric,MetricGoal,GoalDirection,DeployedDate,Version,RefreshCadence,OwnerTeam,IsBusinessCritical
+1,demand_forecaster,Time Series Regression,Forecasts next-7-day job volume per area and category so supply can be pre-positioned,LightGBM,Gradient Boosted Trees,MAPE,12.00,LowerIsBetter,2025-03-01,2.3.0,Weekly,Data Science,1
+2,pro_match_ranker,Learning to Rank,Ranks available technicians for an incoming job,XGBoost,LambdaMART,NDCG@5,0.82,HigherIsBetter,2025-02-15,3.1.0,Weekly,Marketplace ML,1
+3,dynamic_price_engine,Quantile Regression,Produces the quoted price band shown to the customer,LightGBM,Quantile Gradient Boosting,QuoteAcceptRate,0.62,HigherIsBetter,2025-05-01,1.6.0,Weekly,Pricing,1
+4,eta_sla_predictor,Regression,Predicts the technician arrival window behind the SLA promise,CatBoost,Ordered Boosting,RMSEMins,14.00,LowerIsBetter,2025-04-10,1.4.0,Fortnightly,Marketplace ML,0
+5,customer_churn,Binary Classification,Flags customers unlikely to rebook within the next 90 days,XGBoost,Gradient Boosted Trees,AUC,0.79,HigherIsBetter,2025-08-01,1.2.0,Monthly,Growth Analytics,0
+6,fraud_booking_detector,Anomaly Detection,"Catches fake, duplicate and abusive bookings before dispatch",scikit-learn,IsolationForest plus rules,Precision,0.71,HigherIsBetter,2025-06-15,2.0.0,Weekly,Trust and Safety,1
+7,review_sentiment_indic,NLP Classification,"Classifies reviews in English, Kannada, Hindi and code-mixed Kanglish",PyTorch,Fine-tuned MuRIL,MacroF1,0.85,HigherIsBetter,2025-11-01,1.1.0,Quarterly,Data Science,0
+8,lead_quality_scorer,Binary Classification,Scores inbound leads so the sales team calls the ones worth calling,LightGBM,Gradient Boosted Trees,AUC,0.74,HigherIsBetter,2026-01-15,1.0.0,Monthly,Growth Analytics,0
