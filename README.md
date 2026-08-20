@@ -1,5 +1,6 @@
 # Seek My Service — marketplace analytics & ML monitoring
 
+[![Live demo](https://img.shields.io/badge/live%20demo-open%20dashboard-FF4B4B?logo=streamlit&logoColor=white)](https://seek-my-service-analytics.streamlit.app)
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![LightGBM](https://img.shields.io/badge/LightGBM-4.5-9ACD32)](https://lightgbm.readthedocs.io/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.141-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
@@ -13,7 +14,11 @@ marketplace** — dimensional model, semantic layer, three production model
 services, and monitoring that catches a silent failure four months before it
 becomes visible in any accuracy metric.
 
+### ▶ **[Open the live dashboard](https://seek-my-service-analytics.streamlit.app)** — no install, five pages, live model predictions
+
 ![Ops Control Room](docs/images/dashboard-ops.png)
+
+**Live:** [Ops](https://seek-my-service-analytics.streamlit.app/?page=Ops+Control+Room) · [Demand](https://seek-my-service-analytics.streamlit.app/?page=Demand+Intelligence) · [Supply](https://seek-my-service-analytics.streamlit.app/?page=Supply+Health) · [ML Health](https://seek-my-service-analytics.streamlit.app/?page=ML+Model+Health) · [Model Playground](https://seek-my-service-analytics.streamlit.app/?page=Model+Playground)
 
 **Jump to:** [Findings](#what-the-data-revealed) · [The ML incident](#the-ml-incident-a-failure-with-four-beats) ·
 [Architecture](#architecture) · [Run it](#run-it) · [Engineering notes](#engineering-notes) ·
@@ -259,6 +264,9 @@ build.
 ---
 
 ## Run it
+
+The dashboard is **[deployed and public](https://seek-my-service-analytics.streamlit.app)** — nothing to install.
+To run the whole pipeline locally:
 
 **Prerequisites:** Python **3.12** (LightGBM wheels still lag on 3.13+).
 
