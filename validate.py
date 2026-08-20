@@ -462,7 +462,12 @@ def check_strain_sla(report: Report, typed: Dict[str, pd.DataFrame]) -> None:
     daily = b.groupby("DateKey").size().rename("Volume").to_frame()
     daily["Trailing"] = daily["Volume"].shift(1).rolling(
         config.STRAIN_TRAILING_DAYS, min_periods=1).mean()
-    daily["Strain"] = daily["Volume"] / daily["Trailing"]
+    # The first day has no trailing window, so its strain is NaN. Without the
+    # fill, that day's bookings compare False against BOTH the high and the
+    # normal threshold and disappear from the split entirely - 30 rows silently
+    # absent from a comparison that is supposed to cover every completed job.
+    # A neutral 1.0 says what is true: day one is, by definition, average.
+    daily["Strain"] = (daily["Volume"] / daily["Trailing"]).fillna(1.0)
 
     completed = b[b["BookingStatus"] == "Completed"].merge(
         daily[["Strain"]], left_on="DateKey", right_index=True)
@@ -479,7 +484,9 @@ def check_strain_sla(report: Report, typed: Dict[str, pd.DataFrame]) -> None:
     high_rating = float(high["CustomerRating"].mean())
     normal_rating = float(normal["CustomerRating"].mean())
 
-    detail = (f"strain threshold (80th percentile) = {threshold:.3f}\n"
+    covered = len(high) + len(normal)
+    detail = (f"strain threshold (80th percentile) = {threshold:.3f}   "
+              f"jobs covered: {covered:,} of {len(completed):,}\n"
               f"{'':<22}{'jobs':>10}{'SLA breach':>13}{'avg TTA min':>14}{'avg rating':>13}\n"
               f"{'high-strain days':<22}{len(high):>10,}{high_breach:>13.1%}"
               f"{high_tta:>14.1f}{high_rating:>13.2f}\n"
