@@ -1,0 +1,94 @@
+# ---------------------------------------------------------------------------
+# Python
+# ---------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# ---------------------------------------------------------------------------
+# Virtual environment
+# ---------------------------------------------------------------------------
+.venv/
+venv/
+env/
+
+# ---------------------------------------------------------------------------
+# Test and tooling caches
+# ---------------------------------------------------------------------------
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+.coverage.*
+
+# ---------------------------------------------------------------------------
+# Model artefacts - DELIBERATELY COMMITTED
+#
+# These were ignored at first, on the usual reasoning: binary files do not diff,
+# and "make train" regenerates them in about ten seconds.
+#
+# That reasoning stopped holding once the Streamlit app was deployed to a free
+# tier with roughly 1 GB of memory. Fitting LightGBM is the memory-hungry step,
+# not serving it, so a cold container that has to train three models on first
+# request is the most likely thing to fall over - and it would fall over for a
+# visitor, not for us. All three artefacts together are 2.3 MB.
+#
+# Trading 2.3 MB of repository size for a deploy that cannot OOM on first load
+# is the right way round. Left here as a comment rather than deleted, because
+# the original reasoning is still correct in a project without a 1 GB ceiling.
+# ---------------------------------------------------------------------------
+# ml/models/*.joblib
+# ml/models/*.metrics.json
+
+# ---------------------------------------------------------------------------
+# Generated data
+#
+# Deliberately NOT ignored. The CSVs are around 23 MB, they are deterministic
+# from a fixed seed, and a client cloning this repo should be able to open the
+# Power BI file without running Python first. If the data ever grows past what
+# git is comfortable with, ignore data/*.csv and ship a release artefact
+# instead - but that is a decision to take on purpose, not by default.
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# Power BI
+#
+# .pbix is a binary package. It does not diff, it does not merge, and two
+# people editing it produces a conflict nobody can resolve. Keep the report
+# definition in BUILD_GUIDE.md and the measures in version-controlled DAX,
+# which is the whole reason those files exist.
+# ---------------------------------------------------------------------------
+*.pbix
+*.pbit
+*.pbip
+.pbi/
+
+# ---------------------------------------------------------------------------
+# OS and editor noise
+# ---------------------------------------------------------------------------
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*~
+
+# ---------------------------------------------------------------------------
+# Secrets
+#
+# Nothing in this repository needs credentials today. This entry is here so
+# that stays true when someone wires up a real warehouse connection.
+# ---------------------------------------------------------------------------
+.env
+.env.*
+*.pem
+credentials.json
+secrets.toml

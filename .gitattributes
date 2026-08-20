@@ -1,0 +1,41 @@
+# ---------------------------------------------------------------------------
+# Line endings
+#
+# Default to LF in the repository. Git normalises on commit and checks out
+# whatever the platform wants, which is the right behaviour for source.
+# ---------------------------------------------------------------------------
+* text=auto eol=lf
+
+# ---------------------------------------------------------------------------
+# Generated data: never touch these
+#
+# The generator writes UTF-8 with LF and a fixed seed, and the project claims
+# byte-identical regeneration. If git rewrote these to CRLF on checkout that
+# claim would quietly become false, and a checksum comparison would fail for a
+# reason nobody would think to look for.
+# ---------------------------------------------------------------------------
+data/*.csv -text
+
+# ---------------------------------------------------------------------------
+# Windows batch files need CRLF
+#
+# cmd.exe tolerates LF for simple scripts but mis-parses labels and GOTO in
+# some versions. make.bat is entirely labels and GOTO.
+# ---------------------------------------------------------------------------
+*.bat text eol=crlf
+
+# ---------------------------------------------------------------------------
+# Diff hints
+# ---------------------------------------------------------------------------
+*.dax   text diff=cpp
+*.csx   text diff=csharp
+*.m     text
+*.sql   text diff=sql
+*.md    text diff=markdown
+
+# ---------------------------------------------------------------------------
+# Binary: mark explicitly so git never attempts a merge
+# ---------------------------------------------------------------------------
+*.pbix  binary
+*.pbit  binary
+*.joblib binary
