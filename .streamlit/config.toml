@@ -1,0 +1,31 @@
+# Streamlit configuration.
+#
+# The palette matches powerbi/THEME.json and app/theme.py, so the deployed app,
+# the local app and the Power BI report all look like one project.
+
+[theme]
+base = "light"
+primaryColor = "#2A6FB5"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F4F6F8"
+textColor = "#1F2933"
+linkColor = "#2A6FB5"
+font = "sans serif"
+
+[server]
+# Community Cloud sets its own port; this only affects local runs.
+headless = true
+# The generated CSVs total 24 MB and are read from disk, not uploaded.
+maxUploadSize = 5
+
+[browser]
+gatherUsageStats = false
+
+[client]
+# Show errors in full rather than the generic message. This is a portfolio
+# app - if something breaks in front of a client, the traceback is more useful
+# than a shrug, and there are no secrets in it to leak.
+showErrorDetails = true
+
+[runner]
+fastReruns = true
