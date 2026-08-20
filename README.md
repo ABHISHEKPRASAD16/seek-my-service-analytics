@@ -19,6 +19,9 @@ incident.
 16 data integrity checks  ·  109 tests  ·  one fixed seed
 ```
 
+![Ops Control Room](docs/images/dashboard-ops.png)
+
+
 ---
 
 > ## Why the data is synthetic
@@ -83,6 +86,14 @@ The Playground is the one a BI report cannot do: pick an area and a date and the
 actual fitted model responds, with its held-out metrics shown underneath. The
 same definitions drive this app and the Power BI model, so a number does not
 change depending on which one you are looking at.
+
+Pages are addressable, so you can link straight to one:
+`?page=ML+Model+Health`.
+
+| | |
+|:--:|:--:|
+| ![Supply Health](docs/images/dashboard-supply.png) | ![Model Playground](docs/images/dashboard-playground.png) |
+| **Supply Health** — utilisation by trade and season | **Model Playground** — live predictions with held-out metrics |
 
 Without `make`:
 
@@ -262,6 +273,8 @@ explains why it has to exist.
 ---
 
 ## The drift incident
+
+![ML Model Health](docs/images/dashboard-ml-health.png)
 
 The ML Health page is built around a failure with four beats. Learn these four
 dates and you can present the page without notes.

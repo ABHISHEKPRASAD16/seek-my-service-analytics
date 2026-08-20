@@ -26,6 +26,9 @@ gatherUsageStats = false
 # app - if something breaks in front of a client, the traceback is more useful
 # than a shrug, and there are no secrets in it to leak.
 showErrorDetails = true
+# Hide the developer toolbar. A visitor has no use for "Deploy" or "Rerun",
+# and it is the first thing in the top-right corner of every screenshot.
+toolbarMode = "viewer"
 
 [runner]
 fastReruns = true

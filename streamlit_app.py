@@ -86,8 +86,18 @@ def sidebar():
             f"Bengaluru home services · marketplace analytics</div>",
             unsafe_allow_html=True)
 
-        page = st.radio("Page", list(PAGES), label_visibility="collapsed",
+        # Read the page from the URL so individual pages are linkable - useful
+        # when sending someone straight to the ML Model Health page rather than
+        # asking them to find it.
+        requested = st.query_params.get("page")
+        names = list(PAGES)
+        start_index = names.index(requested) if requested in PAGES else 0
+
+        page = st.radio("Page", names, index=start_index,
+                        label_visibility="collapsed",
                         captions=list(PAGES.values()))
+        if st.query_params.get("page") != page:
+            st.query_params["page"] = page
 
         st.markdown("---")
 
