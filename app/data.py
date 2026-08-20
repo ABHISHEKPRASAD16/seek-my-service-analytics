@@ -39,6 +39,38 @@ def data_is_present() -> bool:
     return all((DATA_DIR / f"{t}.csv").exists() for t in config.TABLES)
 
 
+# Below this share of unique values, a text column is stored as a category.
+CATEGORY_MAX_RATIO = 0.5
+
+
+def compact(frame: pd.DataFrame) -> pd.DataFrame:
+    """Shrink a frame in place: narrow integers, categorical text.
+
+    This is not premature optimisation. The capacity frame is 324,435 rows and
+    measured 176 MB, of which 141 MB was text - columns like SkillTier (four
+    distinct values) and Zone (five) stored as a full Python string on every
+    single row. Category dtype stores the distinct values once and an integer
+    code per row.
+
+    That matters because the deployment target has roughly 1 GB of memory. At
+    603 MB peak the app would probably have survived; "probably" is not a good
+    property for the thing a recruiter clicks.
+
+    Floats are deliberately left alone. Downcasting them to float32 would save
+    a little and risk money arithmetic: GMV sums to nine significant figures,
+    and float32 carries about seven.
+    """
+    for column in frame.columns:
+        values = frame[column]
+        if pd.api.types.is_integer_dtype(values):
+            frame[column] = pd.to_numeric(values, downcast="integer")
+        elif values.dtype == object:
+            distinct = values.nunique(dropna=False)
+            if distinct and distinct / max(len(values), 1) < CATEGORY_MAX_RATIO:
+                frame[column] = values.astype("category")
+    return frame
+
+
 # ---------------------------------------------------------------------------
 # Raw tables
 # ---------------------------------------------------------------------------
@@ -71,7 +103,7 @@ def bookings() -> pd.DataFrame:
            .merge(pros, on="ProKey", how="left")
            .merge(customers, on="CustomerKey", how="left"))
     b["IsCompleted"] = (b["BookingStatus"] == "Completed").astype(int)
-    return b
+    return compact(b)
 
 
 @st.cache_data(show_spinner=False)
@@ -110,7 +142,7 @@ def capacity() -> pd.DataFrame:
            .merge(areas, on="AreaKey", how="left")
            .merge(dates, on="DateKey", how="left"))
     c["Date"] = pd.to_datetime(c["Date"])
-    return c
+    return compact(c)
 
 
 @st.cache_data(show_spinner=False)
@@ -124,7 +156,7 @@ def leads() -> pd.DataFrame:
            .merge(areas, on="AreaKey", how="left")
            .merge(dates, on="DateKey", how="left"))
     l["Date"] = pd.to_datetime(l["Date"])
-    return l
+    return compact(l)
 
 
 @st.cache_data(show_spinner=False)
@@ -148,7 +180,7 @@ def forecast_accuracy() -> pd.DataFrame:
     dates = _raw("dim_date")[["DateKey", "Date", "MonthYear", "MonthYearSort"]]
     f = f.merge(areas, on="AreaKey", how="left").merge(dates, on="DateKey", how="left")
     f["Date"] = pd.to_datetime(f["Date"])
-    return f
+    return compact(f)
 
 
 @st.cache_data(show_spinner=False)
@@ -328,13 +360,13 @@ def strain_split(frame: pd.DataFrame, quantile: float = 0.80) -> Dict[str, float
 
 def monthly(frame: pd.DataFrame) -> pd.DataFrame:
     """Month-level aggregates, correctly ordered."""
-    grouped = (frame.groupby(["MonthYearSort", "MonthYear"], as_index=False)
+    grouped = (frame.groupby(["MonthYearSort", "MonthYear"], as_index=False, observed=True)
                .agg(Bookings=("BookingID", "count"),
                     Completed=("IsCompleted", "sum"),
                     GMV=("FinalAmountINR", "sum"),
                     Revenue=("PlatformRevenueINR", "sum")))
     completed = frame[frame["IsCompleted"] == 1]
-    sla = (completed.groupby(["MonthYearSort"], as_index=False)["SLAMetFlag"]
+    sla = (completed.groupby(["MonthYearSort"], as_index=False, observed=True)["SLAMetFlag"]
            .mean().rename(columns={"SLAMetFlag": "SLAMet"}))
     grouped = grouped.merge(sla, on="MonthYearSort", how="left")
     grouped["Cancelled"] = grouped["Bookings"] - grouped["Completed"]

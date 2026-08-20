@@ -71,7 +71,7 @@ def render(filters: data.Filters) -> None:
                "and 14.0 is minutes.")
 
     latest = (metrics.sort_values("Date")
-              .groupby("ModelName", as_index=False)
+              .groupby("ModelName", as_index=False, observed=True)
               .agg(Metric=("PrimaryMetric", "last"),
                    Value=("MetricValue", "mean"),
                    Goal=("MetricGoal", "last"),
@@ -184,7 +184,7 @@ def render(filters: data.Filters) -> None:
             "<div class='sec-note'>Monthly totals across every area and "
             "category.</div>", unsafe_allow_html=True)
         if not forecast.empty:
-            by_month = (forecast.groupby(["MonthYearSort", "MonthYear"], as_index=False)
+            by_month = (forecast.groupby(["MonthYearSort", "MonthYear"], as_index=False, observed=True)
                         .agg(Forecast=("ForecastedJobs", "sum"),
                              Actual=("ActualJobs", "sum")).sort_values("MonthYearSort"))
             fig = go.Figure()

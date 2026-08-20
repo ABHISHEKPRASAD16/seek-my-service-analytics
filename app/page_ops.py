@@ -130,7 +130,8 @@ def render(filters: data.Filters) -> None:
                    "the window.")
         completed = frame[frame["IsCompleted"] == 1]
         pivot = (completed.pivot_table(index="Zone", columns="MonthYear",
-                                       values="SLAMetFlag", aggfunc="mean")
+                                       values="SLAMetFlag", aggfunc="mean",
+                                       observed=True)
                  .reindex(columns=data.monthly(frame)["MonthYear"].tolist()))
         breach = 1 - pivot
         fig = px.imshow(
@@ -145,7 +146,7 @@ def render(filters: data.Filters) -> None:
     with right:
         ui.section("Slowest areas to dispatch",
                    "Thin supply shows up here first.")
-        by_area = (frame.groupby("AreaName")
+        by_area = (frame.groupby("AreaName", observed=True)
                    .agg(TimeToAssign=("TimeToAssignMins", "mean"),
                         SLAMet=("SLAMetFlag", "mean"),
                         Jobs=("BookingID", "count"),

@@ -77,7 +77,7 @@ def render(filters: data.Filters) -> None:
                "The same roster, split by trade and by season. Some trades strain "
                "while others go idle, in the same four months.")
 
-    season = (cap.groupby(["PrimaryServiceCategory", "IsMonsoon"], as_index=False)
+    season = (cap.groupby(["PrimaryServiceCategory", "IsMonsoon"], as_index=False, observed=True)
               .agg(Available=("SlotsAvailable", "sum"), Booked=("SlotsBooked", "sum")))
     season["Utilisation"] = season["Booked"] / season["Available"].replace(0, np.nan)
     season["Season"] = season["IsMonsoon"].map({0: "Dry season", 1: "Monsoon"})
@@ -126,7 +126,7 @@ def render(filters: data.Filters) -> None:
         ui.section("A small number of technicians do most of the work",
                    "Each dot is one technician. Right is capacity they opened; "
                    "up is jobs they actually got.")
-        per_pro = (cap.groupby("ProKey", as_index=False)
+        per_pro = (cap.groupby("ProKey", as_index=False, observed=True)
                    .agg(Available=("SlotsAvailable", "sum"),
                         Booked=("SlotsBooked", "sum"),
                         Tier=("SkillTier", "first"),
@@ -145,7 +145,7 @@ def render(filters: data.Filters) -> None:
 
     with right:
         ui.section("Utilisation by tier", "The spread is the story.")
-        by_tier = (cap.groupby("SkillTier", as_index=False)
+        by_tier = (cap.groupby("SkillTier", as_index=False, observed=True)
                    .agg(Available=("SlotsAvailable", "sum"),
                         Booked=("SlotsBooked", "sum"),
                         Pros=("ProKey", "nunique")))
@@ -181,7 +181,7 @@ def render(filters: data.Filters) -> None:
 
     with left:
         ui.section("Capacity opened against capacity used")
-        by_month = (cap.groupby(["MonthYearSort", "MonthYear"], as_index=False)
+        by_month = (cap.groupby(["MonthYearSort", "MonthYear"], as_index=False, observed=True)
                     .agg(Available=("SlotsAvailable", "sum"),
                          Booked=("SlotsBooked", "sum")).sort_values("MonthYearSort"))
         by_month["Utilisation"] = by_month["Booked"] / by_month["Available"]
@@ -206,7 +206,7 @@ def render(filters: data.Filters) -> None:
                    f"Active, rated below {AT_RISK_RATING}. Ratings are shrunk towards "
                    "a tier prior, so this is a sustained pattern rather than one bad "
                    "week.")
-        worked = (cap.groupby("ProKey", as_index=False)["SlotsBooked"].sum()
+        worked = (cap.groupby("ProKey", as_index=False, observed=True)["SlotsBooked"].sum()
                   .rename(columns={"SlotsBooked": "Jobs"}))
         risk = (in_scope[(in_scope["IsActive"] == 1)
                          & (in_scope["AvgRating"] < AT_RISK_RATING)]

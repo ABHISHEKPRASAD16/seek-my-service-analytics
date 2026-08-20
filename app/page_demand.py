@@ -76,7 +76,7 @@ def render(filters: data.Filters) -> None:
                  if c in completed["ServiceCategory"].unique()]
         by_month = (completed[completed["ServiceCategory"].isin(watch)]
                     .groupby(["MonthYearSort", "MonthYear", "ServiceCategory"],
-                             as_index=False).size()
+                             as_index=False, observed=True).size()
                     .rename(columns={"size": "Jobs"})
                     .sort_values("MonthYearSort"))
         if by_month.empty:
@@ -103,7 +103,7 @@ def render(filters: data.Filters) -> None:
         ui.section("Where the demand is",
                    "Bubble size is booking volume; colour is demand tier.")
         by_area = (frame.groupby(["AreaName", "Latitude", "Longitude", "DemandTier"],
-                                 as_index=False)
+                                 as_index=False, observed=True)
                    .agg(Bookings=("BookingID", "count"),
                         GMV=("FinalAmountINR", "sum")))
         fig = px.scatter_map(
@@ -122,7 +122,7 @@ def render(filters: data.Filters) -> None:
         ui.section("High interest, poor conversion",
                    "Search-to-booking rate by area and category. Red is interest "
                    "that is not turning into work.")
-        conv = (funnel.groupby(["AreaName", "ServiceCategory"], as_index=False)
+        conv = (funnel.groupby(["AreaName", "ServiceCategory"], as_index=False, observed=True)
                 .agg(Searches=("Searches", "sum"), Bookings=("Bookings", "sum")))
         conv["Conversion"] = conv["Bookings"] / conv["Searches"].replace(0, np.nan)
         pivot = conv.pivot(index="AreaName", columns="ServiceCategory",
@@ -136,7 +136,7 @@ def render(filters: data.Filters) -> None:
         theme.style(fig, height=380, legend=False)
         ui.chart(fig)
 
-    tier_conv = (funnel.groupby("DemandTier", as_index=False)
+    tier_conv = (funnel.groupby("DemandTier", as_index=False, observed=True)
                  .agg(Searches=("Searches", "sum"), Bookings=("Bookings", "sum")))
     tier_conv["Conversion"] = tier_conv["Bookings"] / tier_conv["Searches"]
     if {"A", "C"} <= set(tier_conv["DemandTier"]):
@@ -167,7 +167,7 @@ def render(filters: data.Filters) -> None:
         ui.empty_state("No customers in scope.")
         return
 
-    by_channel = (cust.groupby("AcquisitionChannel", as_index=False)
+    by_channel = (cust.groupby("AcquisitionChannel", as_index=False, observed=True)
                   .agg(Customers=("CustomerKey", "count"),
                        AvgLTV=("LifetimeValueINR", "mean"),
                        AvgBookings=("TotalBookings", "mean"),
