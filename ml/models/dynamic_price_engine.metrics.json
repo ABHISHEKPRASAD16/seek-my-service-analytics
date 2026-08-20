@@ -1,0 +1,19 @@
+{
+  "pinball_q10": 70.52,
+  "pinball_q50": 180.461,
+  "pinball_q90": 89.455,
+  "band_coverage": 0.7821,
+  "band_coverage_target": 0.8,
+  "median_mae_inr": 360.92,
+  "median_mape": 0.1454,
+  "mean_band_width_pct": 0.4482,
+  "quantile_crossings": 0,
+  "n_price_train": 30945,
+  "n_price_valid": 15449,
+  "accept_auc": 0.5268,
+  "accept_base_rate": 0.7943,
+  "n_accept_train": 38522,
+  "n_accept_valid": 19451,
+  "trained_at": "2026-08-19T20:04:12",
+  "artifact": "dynamic_price_engine.joblib"
+}

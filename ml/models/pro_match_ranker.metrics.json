@@ -1,0 +1,16 @@
+{
+  "ndcg_at_1": 0.8832,
+  "ndcg_at_3": 0.9522,
+  "ndcg_at_5": 0.9538,
+  "recall_at_1": 0.8832,
+  "recall_at_3": 0.9957,
+  "recall_at_5": 0.9996,
+  "mean_rank_of_chosen": 1.142,
+  "random_baseline_ndcg_at_5": 0.3686,
+  "n_train_groups": 11200,
+  "n_valid_groups": 2800,
+  "candidates_per_group": 8,
+  "best_iteration": 13,
+  "trained_at": "2026-08-19T20:04:10",
+  "artifact": "pro_match_ranker.joblib"
+}

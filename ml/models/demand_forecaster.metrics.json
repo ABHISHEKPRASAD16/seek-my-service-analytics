@@ -1,0 +1,18 @@
+{
+  "mape": 0.4766,
+  "mape_noise_floor": 0.4422,
+  "mape_city_category_grain": 0.1466,
+  "mape_area_grain": 0.1372,
+  "wape": 0.3544,
+  "mae": 2.4522,
+  "rmse": 3.3485,
+  "bias": -0.0683,
+  "mean_target": 6.92,
+  "n_train": 73120,
+  "n_valid": 18560,
+  "n_valid_nonzero": 18023,
+  "best_iteration": 10,
+  "residual_std": 3.315,
+  "trained_at": "2026-08-19T20:04:04",
+  "artifact": "demand_forecaster.joblib"
+}
