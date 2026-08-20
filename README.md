@@ -1,5 +1,13 @@
 # Seek My Service
 
+[![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![LightGBM](https://img.shields.io/badge/LightGBM-4.5-9ACD32)](https://lightgbm.readthedocs.io/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.141-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.62-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
+[![Power BI](https://img.shields.io/badge/Power%20BI-119%20DAX%20measures-F2C811?logo=powerbi&logoColor=black)](powerbi/measures.dax)
+[![Tests](https://img.shields.io/badge/tests-109%20passing-1B9E77)](tests/)
+[![Data checks](https://img.shields.io/badge/data%20checks-16%2F16-1B9E77)](validate.py)
+
 **A production-shaped analytics and ML project for a Bengaluru home-services
 marketplace.** Synthetic data, a Power BI star schema, a Streamlit dashboard,
 three FastAPI model services, and a monitoring layer built around a real drift
@@ -29,8 +37,7 @@ incident.
 > What is *not* synthetic is everything structural: the schema design, the
 > transformation layer, the 119 measures, the model choices, the monitoring
 > approach, and the Bengaluru domain detail. See **"What is synthetic and what
-> is realistic"** below for the full breakdown, and say "synthetic" out loud in
-> the first ninety seconds of any walkthrough.
+> is realistic"** below for the full breakdown.
 
 ---
 
@@ -131,7 +138,7 @@ app/                5 dashboard pages, theme, cached data layer
 validate.py         16 integrity checks
 ```
 
-**Start here depending on who you are:**
+**Where to start:**
 
 | You are | Read |
 |---|---|
@@ -254,7 +261,7 @@ explains why it has to exist.
 
 ---
 
-## The drift incident, so you can talk through it cold
+## The drift incident
 
 The ML Health page is built around a failure with four beats. Learn these four
 dates and you can present the page without notes.
@@ -266,11 +273,11 @@ dates and you can present the page without notes.
 | **15–18 Jun 2026** | PSI crosses the **0.25** alert threshold. MAPE degrades from 9% to a plateau of **19%**. Feature nulls rise to ~2.5%. This is the first visible signal | PSI chart, MAPE chart |
 | **20 Jul 2026** | Retrain lands. Version **2.3.0 → 2.4.0**. `TrainingDataAgeDays` resets from **126 days** to zero. MAPE back to ~10% within four days | All three charts at once |
 
-**The line to land:** *"It was broken in March and only looked broken in June.
+**The point:** *"It was broken in March and only looked broken in June.
 The metric that would have caught it in March is how old the training data is —
 one column, costs nothing, almost nobody monitors it."*
 
-> **A note so you are not caught out.** The **daily** MAPE plateau is 19.2%,
+> **A note on how it is measured.** The **daily** MAPE plateau is 19.2%,
 > exactly as designed. A **monthly** average reads ~16% for June and ~17% for
 > July, because June contains the ramp-up and July contains the post-retrain
 > recovery. That is arithmetic, not a discrepancy. Use the daily axis in the
@@ -291,8 +298,6 @@ twenty months.
 ---
 
 ## What is synthetic and what is realistic
-
-**Read this before showing the project to anyone.**
 
 ### Synthetic — I generated all of it
 
