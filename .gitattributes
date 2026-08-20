@@ -39,3 +39,19 @@ data/*.csv -text
 *.pbix  binary
 *.pbit  binary
 *.joblib binary
+
+# ---------------------------------------------------------------------------
+# Language detection (GitHub Linguist)
+#
+# queries.m is Power Query M. Linguist has no Power Query definition and the
+# .m extension is ambiguous across MATLAB, Mathematica, Objective-C and Mercury,
+# so GitHub was labelling it "Wolfram Language" - which is simply wrong and
+# looks careless on the repository page.
+#
+# measures.dax has no Linguist definition at all, so it is excluded rather than
+# guessed at. The .csx script genuinely is C# and is left detected.
+# ---------------------------------------------------------------------------
+*.m     linguist-detectable=false
+*.dax   linguist-detectable=false
+*.csx   linguist-language=C#
+sql/*.sql linguist-language=SQL
