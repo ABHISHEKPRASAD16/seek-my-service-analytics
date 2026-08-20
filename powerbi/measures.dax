@@ -1,0 +1,913 @@
+// ==========================================================================
+// Seek My Service - DAX measure library
+// 119 measures (111 numeric, 8 text),
+// every one with an explicit FORMAT_STRING.
+//
+// GENERATED FILE - edit powerbi/build_measures.py and re-run it, so that
+// this file and measures_tabular_editor.csx can never disagree.
+//
+// Three ways to get these into a model, fastest first:
+//
+//   1. Tabular Editor 2. External Tools > Tabular Editor > Advanced
+//      Scripting, paste measures_tabular_editor.csx, run, then Save.
+//      All measures land at once with folders and format strings.
+//
+//   2. DAX query view, no external tool needed. Paste this whole file
+//      into a DAX query, then use the 'Update model: Add new measure'
+//      CodeLens link above each measure.
+//
+//   3. By hand. Copy the body of a measure into the formula bar and set
+//      the format string from the ribbon. Slow, identical result.
+//
+// All measures are hosted on the fact_bookings table and organised by
+// display folder. Note the deliberate style: DIVIDE everywhere instead of
+// the '/' operator, and CALCULATE only where filter context genuinely
+// needs modifying.
+// ==========================================================================
+
+DEFINE
+
+// --------------------------------------------------------------------------
+// 01 Core
+// --------------------------------------------------------------------------
+
+// Every booking row regardless of status. The denominator for the rate
+// measures.
+MEASURE fact_bookings[Total Bookings] =
+    COUNTROWS ( fact_bookings )
+    FORMAT_STRING = "#,0"
+
+// Bookings that were actually fulfilled. Only these carry money.
+MEASURE fact_bookings[Completed Jobs] =
+    CALCULATE (
+        [Total Bookings],
+        fact_bookings[BookingStatus] = "Completed"
+    )
+    FORMAT_STRING = "#,0"
+
+// Share of bookings that reached a completed job.
+MEASURE fact_bookings[Completion Rate] =
+    DIVIDE ( [Completed Jobs], [Total Bookings] )
+    FORMAT_STRING = "0.0%"
+
+// Cancellations from either side of the marketplace.
+MEASURE fact_bookings[Cancelled Jobs] =
+    CALCULATE (
+        [Total Bookings],
+        fact_bookings[BookingStatus] IN { "CancelledByCustomer", "CancelledByPro" }
+    )
+    FORMAT_STRING = "#,0"
+
+// Combined cancellation rate. Rises on heavy monsoon days.
+MEASURE fact_bookings[Cancellation Rate] =
+    DIVIDE ( [Cancelled Jobs], [Total Bookings] )
+    FORMAT_STRING = "0.0%"
+
+// Cancellations initiated by the customer.
+MEASURE fact_bookings[Customer Cancellation Rate] =
+    DIVIDE (
+        CALCULATE ( [Total Bookings], fact_bookings[BookingStatus] = "CancelledByCustomer" ),
+        [Total Bookings]
+    )
+    FORMAT_STRING = "0.0%"
+
+// Cancellations initiated by the technician. A supply-reliability signal.
+MEASURE fact_bookings[Pro Cancellation Rate] =
+    DIVIDE (
+        CALCULATE ( [Total Bookings], fact_bookings[BookingStatus] = "CancelledByPro" ),
+        [Total Bookings]
+    )
+    FORMAT_STRING = "0.0%"
+
+// Bookings where the technician never arrived.
+MEASURE fact_bookings[No Show Rate] =
+    DIVIDE (
+        CALCULATE ( [Total Bookings], fact_bookings[BookingStatus] = "NoShow" ),
+        [Total Bookings]
+    )
+    FORMAT_STRING = "0.0%"
+
+// Bookings superseded by a rescheduled booking record.
+MEASURE fact_bookings[Reschedule Rate] =
+    DIVIDE (
+        CALCULATE ( [Total Bookings], fact_bookings[BookingStatus] = "Rescheduled" ),
+        [Total Bookings]
+    )
+    FORMAT_STRING = "0.0%"
+
+// Gross merchandise value: what customers paid, before the platform's cut.
+MEASURE fact_bookings[GMV INR] =
+    SUM ( fact_bookings[FinalAmountINR] )
+    FORMAT_STRING = "#,0"
+
+// The platform's commission. This is the company's actual top line.
+MEASURE fact_bookings[Platform Revenue INR] =
+    SUM ( fact_bookings[PlatformRevenueINR] )
+    FORMAT_STRING = "#,0"
+
+// Platform revenue as a share of GMV. Mix-sensitive: painting drags it
+// down.
+MEASURE fact_bookings[Take Rate Pct] =
+    DIVIDE ( [Platform Revenue INR], [GMV INR] )
+    FORMAT_STRING = "0.0%"
+
+// GMV per completed job.
+MEASURE fact_bookings[Avg Order Value] =
+    DIVIDE ( [GMV INR], [Completed Jobs] )
+    FORMAT_STRING = "#,0"
+
+// Pass-through cost of materials on completed jobs.
+MEASURE fact_bookings[Material Cost INR] =
+    SUM ( fact_bookings[MaterialCostINR] )
+    FORMAT_STRING = "#,0"
+
+// GMV net of materials. The real value the platform's labour creates.
+MEASURE fact_bookings[Net Revenue After Material INR] =
+    [GMV INR] - [Material Cost INR]
+    FORMAT_STRING = "#,0"
+
+// Net-of-material revenue as a share of GMV.
+MEASURE fact_bookings[Gross Margin Pct] =
+    DIVIDE ( [Net Revenue After Material INR], [GMV INR] )
+    FORMAT_STRING = "0.0%"
+
+// Total quoted before discounts and on-site scope changes.
+MEASURE fact_bookings[Quoted Amount INR] =
+    SUM ( fact_bookings[QuotedAmountINR] )
+    FORMAT_STRING = "#,0"
+
+// Coupon and promotional value handed out.
+MEASURE fact_bookings[Discount Given INR] =
+    SUM ( fact_bookings[DiscountINR] )
+    FORMAT_STRING = "#,0"
+
+// Discount as a share of the quoted value.
+MEASURE fact_bookings[Discount Rate Pct] =
+    DIVIDE ( [Discount Given INR], [Quoted Amount INR] )
+    FORMAT_STRING = "0.0%"
+
+// --------------------------------------------------------------------------
+// 02 Time Intelligence
+// --------------------------------------------------------------------------
+
+// GMV in the equivalent prior month.
+MEASURE fact_bookings[GMV INR PM] =
+    CALCULATE ( [GMV INR], DATEADD ( dim_date[Date], -1, MONTH ) )
+    FORMAT_STRING = "#,0"
+
+// Month-over-month change in GMV.
+MEASURE fact_bookings[GMV MoM Pct] =
+    DIVIDE ( [GMV INR] - [GMV INR PM], [GMV INR PM] )
+    FORMAT_STRING = "+0.0%;-0.0%;0.0%"
+
+// GMV in the equivalent period one year earlier.
+MEASURE fact_bookings[GMV INR PY] =
+    CALCULATE ( [GMV INR], DATEADD ( dim_date[Date], -12, MONTH ) )
+    FORMAT_STRING = "#,0"
+
+// Year-over-year change in GMV. Blank before Jan 2026, which is correct.
+MEASURE fact_bookings[GMV YoY Pct] =
+    DIVIDE ( [GMV INR] - [GMV INR PY], [GMV INR PY] )
+    FORMAT_STRING = "+0.0%;-0.0%;0.0%"
+
+// Booking volume in the prior month.
+MEASURE fact_bookings[Bookings PM] =
+    CALCULATE ( [Total Bookings], DATEADD ( dim_date[Date], -1, MONTH ) )
+    FORMAT_STRING = "#,0"
+
+// Month-over-month change in booking volume.
+MEASURE fact_bookings[Bookings MoM Pct] =
+    DIVIDE ( [Total Bookings] - [Bookings PM], [Bookings PM] )
+    FORMAT_STRING = "+0.0%;-0.0%;0.0%"
+
+// Booking volume one year earlier.
+MEASURE fact_bookings[Bookings PY] =
+    CALCULATE ( [Total Bookings], DATEADD ( dim_date[Date], -12, MONTH ) )
+    FORMAT_STRING = "#,0"
+
+// Year-over-year change in booking volume.
+MEASURE fact_bookings[Bookings YoY Pct] =
+    DIVIDE ( [Total Bookings] - [Bookings PY], [Bookings PY] )
+    FORMAT_STRING = "+0.0%;-0.0%;0.0%"
+
+// Commission earned in the prior month.
+MEASURE fact_bookings[Platform Revenue PM] =
+    CALCULATE ( [Platform Revenue INR], DATEADD ( dim_date[Date], -1, MONTH ) )
+    FORMAT_STRING = "#,0"
+
+// Month-over-month change in platform revenue.
+MEASURE fact_bookings[Platform Revenue MoM Pct] =
+    DIVIDE ( [Platform Revenue INR] - [Platform Revenue PM], [Platform Revenue PM] )
+    FORMAT_STRING = "+0.0%;-0.0%;0.0%"
+
+// Commission earned one year earlier.
+MEASURE fact_bookings[Platform Revenue PY] =
+    CALCULATE ( [Platform Revenue INR], DATEADD ( dim_date[Date], -12, MONTH ) )
+    FORMAT_STRING = "#,0"
+
+// Year-over-year change in platform revenue.
+MEASURE fact_bookings[Platform Revenue YoY Pct] =
+    DIVIDE ( [Platform Revenue INR] - [Platform Revenue PY], [Platform Revenue PY] )
+    FORMAT_STRING = "+0.0%;-0.0%;0.0%"
+
+// Average daily GMV over the trailing 28 days. Smooths the weekend
+// sawtooth.
+MEASURE fact_bookings[GMV Rolling 28D Avg] =
+    DIVIDE (
+        CALCULATE (
+            [GMV INR],
+            DATESINPERIOD ( dim_date[Date], MAX ( dim_date[Date] ), -28, DAY )
+        ),
+        28
+    )
+    FORMAT_STRING = "#,0"
+
+// Average daily booking volume over the trailing 28 days.
+MEASURE fact_bookings[Bookings Rolling 28D Avg] =
+    DIVIDE (
+        CALCULATE (
+            [Total Bookings],
+            DATESINPERIOD ( dim_date[Date], MAX ( dim_date[Date] ), -28, DAY )
+        ),
+        28
+    )
+    FORMAT_STRING = "#,0"
+
+// Three-month moving average of monthly GMV.
+MEASURE fact_bookings[GMV 3M Moving Avg] =
+    DIVIDE (
+        CALCULATE (
+            [GMV INR],
+            DATESINPERIOD ( dim_date[Date], MAX ( dim_date[Date] ), -3, MONTH )
+        ),
+        3
+    )
+    FORMAT_STRING = "#,0"
+
+// Calendar year to date.
+MEASURE fact_bookings[GMV YTD] =
+    CALCULATE ( [GMV INR], DATESYTD ( dim_date[Date] ) )
+    FORMAT_STRING = "#,0"
+
+// Indian fiscal year to date, April to March. Built from the FiscalYear
+// column rather than a year-end string, so it is immune to locale.
+MEASURE fact_bookings[GMV FYTD] =
+    VAR CurrentFY = MAX ( dim_date[FiscalYear] )
+    VAR LastDate = MAX ( dim_date[Date] )
+    RETURN
+        CALCULATE (
+            [GMV INR],
+            REMOVEFILTERS ( dim_date ),
+            dim_date[FiscalYear] = CurrentFY,
+            dim_date[Date] <= LastDate
+        )
+    FORMAT_STRING = "#,0"
+
+// Indian fiscal year to date commission.
+MEASURE fact_bookings[Platform Revenue FYTD] =
+    VAR CurrentFY = MAX ( dim_date[FiscalYear] )
+    VAR LastDate = MAX ( dim_date[Date] )
+    RETURN
+        CALCULATE (
+            [Platform Revenue INR],
+            REMOVEFILTERS ( dim_date ),
+            dim_date[FiscalYear] = CurrentFY,
+            dim_date[Date] <= LastDate
+        )
+    FORMAT_STRING = "#,0"
+
+// --------------------------------------------------------------------------
+// 03 Operations
+// --------------------------------------------------------------------------
+
+// Minutes from booking created to a technician accepting it.
+MEASURE fact_bookings[Avg Time To Assign] =
+    AVERAGE ( fact_bookings[TimeToAssignMins] )
+    FORMAT_STRING = "0.0"
+
+// Minutes from assignment to the technician confirming.
+MEASURE fact_bookings[Avg Response Time] =
+    AVERAGE ( fact_bookings[ResponseTimeMins] )
+    FORMAT_STRING = "0.0"
+
+// Share of completed jobs where the technician arrived inside the promised
+// window.
+MEASURE fact_bookings[SLA Met Pct] =
+    AVERAGE ( fact_bookings[SLAMetFlag] )
+    FORMAT_STRING = "0.0%"
+
+// Completed jobs that missed the arrival promise.
+MEASURE fact_bookings[SLA Breach Count] =
+    CALCULATE (
+        [Completed Jobs],
+        fact_bookings[SLAMetFlag] = 0
+    )
+    FORMAT_STRING = "#,0"
+
+// The complement of SLA Met Pct, for when a chart reads better upside
+// down.
+MEASURE fact_bookings[SLA Breach Pct] =
+    1 - [SLA Met Pct]
+    FORMAT_STRING = "0.0%"
+
+// Average on-site minutes for completed jobs.
+MEASURE fact_bookings[Avg Job Duration] =
+    AVERAGE ( fact_bookings[JobDurationMins] )
+    FORMAT_STRING = "0.0"
+
+// Share of completed jobs resolved without a return visit.
+MEASURE fact_bookings[First Time Fix Pct] =
+    AVERAGE ( fact_bookings[IsFirstTimeFix] )
+    FORMAT_STRING = "0.0%"
+
+// Completed jobs reopened within seven days. The quality tail.
+MEASURE fact_bookings[Reopen Rate] =
+    AVERAGE ( fact_bookings[ReopenedWithin7Days] )
+    FORMAT_STRING = "0.0%"
+
+// Average realised arrival time in minutes.
+MEASURE fact_bookings[Avg Actual ETA] =
+    AVERAGE ( fact_bookings[ActualETAMins] )
+    FORMAT_STRING = "0.0"
+
+// Average daily volume in context divided by the trailing 30-day daily
+// average. Above 1.0 means the day is running hotter than the recent norm,
+// and SLA breaches track it closely.
+MEASURE fact_bookings[Capacity Strain Index] =
+    VAR DaysInContext = COUNTROWS ( VALUES ( dim_date[Date] ) )
+    VAR CurrentDaily = DIVIDE ( [Total Bookings], DaysInContext )
+    VAR TrailingDaily =
+        DIVIDE (
+            CALCULATE (
+                [Total Bookings],
+                DATESINPERIOD ( dim_date[Date], MAX ( dim_date[Date] ), -30, DAY )
+            ),
+            30
+        )
+    RETURN
+        DIVIDE ( CurrentDaily, TrailingDaily )
+    FORMAT_STRING = "0.00"
+
+// Share of bookings for services flagged as emergency call-outs.
+MEASURE fact_bookings[Emergency Job Pct] =
+    DIVIDE (
+        CALCULATE ( [Total Bookings], dim_service[IsEmergency] = 1 ),
+        [Total Bookings]
+    )
+    FORMAT_STRING = "0.0%"
+
+// --------------------------------------------------------------------------
+// 04 Funnel and Demand
+// --------------------------------------------------------------------------
+
+// Searches performed, at day x area x service grain.
+MEASURE fact_bookings[Search Volume] =
+    SUM ( fact_leads[Searches] )
+    FORMAT_STRING = "#,0"
+
+// Searches that turned into an identified lead.
+MEASURE fact_bookings[Lead Volume] =
+    SUM ( fact_leads[Leads] )
+    FORMAT_STRING = "#,0"
+
+// Leads that received at least one quote.
+MEASURE fact_bookings[Quotes Sent] =
+    SUM ( fact_leads[QuotesSent] )
+    FORMAT_STRING = "#,0"
+
+// Bookings as counted inside the funnel fact. Reconciles exactly to Total
+// Bookings.
+MEASURE fact_bookings[Funnel Bookings] =
+    SUM ( fact_leads[Bookings] )
+    FORMAT_STRING = "#,0"
+
+// First funnel step.
+MEASURE fact_bookings[Search to Lead Pct] =
+    DIVIDE ( [Lead Volume], [Search Volume] )
+    FORMAT_STRING = "0.0%"
+
+// Second funnel step. Weak values here mean a supply coverage problem.
+MEASURE fact_bookings[Lead to Quote Pct] =
+    DIVIDE ( [Quotes Sent], [Lead Volume] )
+    FORMAT_STRING = "0.0%"
+
+// Third funnel step. Structurally weaker in low demand-tier areas.
+MEASURE fact_bookings[Quote to Booking Pct] =
+    DIVIDE ( [Funnel Bookings], [Quotes Sent] )
+    FORMAT_STRING = "0.0%"
+
+// End-to-end conversion. The single number the growth team lives on.
+MEASURE fact_bookings[Search to Booking Pct] =
+    DIVIDE ( [Funnel Bookings], [Search Volume] )
+    FORMAT_STRING = "0.0%"
+
+// Mean lead_quality_scorer output for the cell.
+MEASURE fact_bookings[Avg Lead Quality] =
+    AVERAGE ( fact_leads[AvgLeadQualityScore] )
+    FORMAT_STRING = "0.000"
+
+// Search interest that produced no booking at all. Where the money is
+// leaking.
+MEASURE fact_bookings[Unconverted Searches] =
+    [Search Volume] - [Funnel Bookings]
+    FORMAT_STRING = "#,0"
+
+// Share of searched cells that produced at least one booking.
+MEASURE fact_bookings[Demand Coverage Pct] =
+    VAR TotalCells = COUNTROWS ( fact_leads )
+    VAR ConvertedCells = CALCULATE ( COUNTROWS ( fact_leads ), fact_leads[Bookings] > 0 )
+    RETURN
+        DIVIDE ( ConvertedCells, TotalCells )
+    FORMAT_STRING = "0.0%"
+
+// --------------------------------------------------------------------------
+// 05 Customer
+// --------------------------------------------------------------------------
+
+// Distinct customers who booked in the current filter context.
+MEASURE fact_bookings[Total Customers] =
+    DISTINCTCOUNT ( fact_bookings[CustomerKey] )
+    FORMAT_STRING = "#,0"
+
+// Customers placing their first ever booking in the period.
+MEASURE fact_bookings[New Customers] =
+    CALCULATE (
+        DISTINCTCOUNT ( fact_bookings[CustomerKey] ),
+        fact_bookings[IsRepeatCustomer] = 0
+    )
+    FORMAT_STRING = "#,0"
+
+// Customers booking again, having booked before.
+MEASURE fact_bookings[Repeat Customers] =
+    CALCULATE (
+        DISTINCTCOUNT ( fact_bookings[CustomerKey] ),
+        fact_bookings[IsRepeatCustomer] = 1
+    )
+    FORMAT_STRING = "#,0"
+
+// Share of bookings placed by returning customers.
+MEASURE fact_bookings[Repeat Rate] =
+    DIVIDE (
+        CALCULATE ( [Total Bookings], fact_bookings[IsRepeatCustomer] = 1 ),
+        [Total Bookings]
+    )
+    FORMAT_STRING = "0.0%"
+
+// Accounts created in the period, via the inactive SignupDate
+// relationship. Signups lead first bookings, so this and New Customers
+// differ by design.
+MEASURE fact_bookings[Customer Signups] =
+    CALCULATE (
+        COUNTROWS ( dim_customer ),
+        USERELATIONSHIP ( dim_customer[SignupDate], dim_date[Date] )
+    )
+    FORMAT_STRING = "#,0"
+
+// Distinct customers with a booking in the trailing 90 days.
+MEASURE fact_bookings[Active Customers 90D] =
+    CALCULATE (
+        DISTINCTCOUNT ( fact_bookings[CustomerKey] ),
+        DATESINPERIOD ( dim_date[Date], MAX ( dim_date[Date] ), -90, DAY )
+    )
+    FORMAT_STRING = "#,0"
+
+// Completed jobs that received a star rating.
+MEASURE fact_bookings[Rated Jobs] =
+    CALCULATE (
+        COUNTROWS ( fact_bookings ),
+        fact_bookings[CustomerRating] IN { 1, 2, 3, 4, 5 }
+    )
+    FORMAT_STRING = "#,0"
+
+// Response rate on the rating prompt. Roughly 62% by design.
+MEASURE fact_bookings[Rated Job Pct] =
+    DIVIDE ( [Rated Jobs], [Completed Jobs] )
+    FORMAT_STRING = "0.0%"
+
+// Mean customer star rating, 1 to 5.
+MEASURE fact_bookings[Avg CSAT] =
+    AVERAGE ( fact_bookings[CustomerRating] )
+    FORMAT_STRING = "0.00"
+
+// Net promoter proxy from stars: 5 promotes, 4 is passive, 3 and below
+// detracts. Explicit value lists keep blank ratings out of the detractor
+// bucket.
+MEASURE fact_bookings[NPS Proxy] =
+    VAR Promoters = CALCULATE ( COUNTROWS ( fact_bookings ), fact_bookings[CustomerRating] = 5 )
+    VAR Detractors = CALCULATE ( COUNTROWS ( fact_bookings ), fact_bookings[CustomerRating] IN { 1, 2, 3 } )
+    RETURN
+        DIVIDE ( Promoters - Detractors, [Rated Jobs] ) * 100
+    FORMAT_STRING = "0"
+
+// Share of rated jobs whose sentiment came back negative.
+MEASURE fact_bookings[Negative Review Pct] =
+    DIVIDE (
+        CALCULATE ( COUNTROWS ( fact_bookings ), fact_bookings[ReviewSentiment] = "Negative" ),
+        [Rated Jobs]
+    )
+    FORMAT_STRING = "0.0%"
+
+// Mean lifetime value across customers in context.
+MEASURE fact_bookings[Avg LTV INR] =
+    AVERAGE ( dim_customer[LifetimeValueINR] )
+    FORMAT_STRING = "#,0"
+
+// Each acquisition channel's share of new customers. Put this on a bar
+// chart beside Repeat Rate and the paid-social quality gap is impossible
+// to miss.
+MEASURE fact_bookings[Customer Acquisition Mix Pct] =
+    DIVIDE (
+        [New Customers],
+        CALCULATE ( [New Customers], REMOVEFILTERS ( dim_customer[AcquisitionChannel] ) )
+    )
+    FORMAT_STRING = "0.0%"
+
+// Average bookings per distinct customer in context.
+MEASURE fact_bookings[Bookings per Customer] =
+    DIVIDE ( [Total Bookings], [Total Customers] )
+    FORMAT_STRING = "0.00"
+
+// --------------------------------------------------------------------------
+// 06 Professional Supply
+// --------------------------------------------------------------------------
+
+// Technicians who worked at least one job in the period.
+MEASURE fact_bookings[Active Pros] =
+    CALCULATE (
+        DISTINCTCOUNT ( fact_pro_capacity[ProKey] ),
+        fact_pro_capacity[SlotsBooked] > 0
+    )
+    FORMAT_STRING = "#,0"
+
+// Technicians who opened a calendar at all, whether or not they got work.
+MEASURE fact_bookings[Pros Online] =
+    CALCULATE (
+        DISTINCTCOUNT ( fact_pro_capacity[ProKey] ),
+        fact_pro_capacity[IsOnline] = 1
+    )
+    FORMAT_STRING = "#,0"
+
+// Technicians on the books, active or churned.
+MEASURE fact_bookings[Roster Size] =
+    COUNTROWS ( dim_professional )
+    FORMAT_STRING = "#,0"
+
+// Capacity the roster actually opened.
+MEASURE fact_bookings[Slots Available] =
+    SUM ( fact_pro_capacity[SlotsAvailable] )
+    FORMAT_STRING = "#,0"
+
+// Capacity consumed by real bookings.
+MEASURE fact_bookings[Slots Booked] =
+    SUM ( fact_pro_capacity[SlotsBooked] )
+    FORMAT_STRING = "#,0"
+
+// Booked slots over available slots. Low in aggregate and brutally unequal
+// across the roster, which is the point worth showing.
+MEASURE fact_bookings[Pro Utilization Pct] =
+    DIVIDE ( [Slots Booked], [Slots Available] )
+    FORMAT_STRING = "0.0%"
+
+// Completed jobs divided by technicians who worked.
+MEASURE fact_bookings[Jobs per Active Pro] =
+    DIVIDE ( [Completed Jobs], [Active Pros] )
+    FORMAT_STRING = "0.0"
+
+// Offers accepted over offers received.
+MEASURE fact_bookings[Pro Acceptance Rate] =
+    DIVIDE (
+        SUM ( fact_pro_capacity[AcceptedJobs] ),
+        SUM ( fact_pro_capacity[AcceptedJobs] ) + SUM ( fact_pro_capacity[RejectedJobs] )
+    )
+    FORMAT_STRING = "0.0%"
+
+// Total technician hours on the platform, converted from logged minutes.
+MEASURE fact_bookings[Hours Logged] =
+    DIVIDE ( SUM ( fact_pro_capacity[HoursLoggedMins] ), 60 )
+    FORMAT_STRING = "#,0"
+
+// Active technicians whose shrunk rating sits below 4.0. Ratings are
+// shrunk towards a tier prior, so a low score here means sustained poor
+// performance rather than one bad week.
+MEASURE fact_bookings[Pros At Risk] =
+    CALCULATE (
+        COUNTROWS ( dim_professional ),
+        dim_professional[IsActive] = 1,
+        dim_professional[AvgRating] < 4.0
+    )
+    FORMAT_STRING = "#,0"
+
+// Mean shrunk rating across technicians in context.
+MEASURE fact_bookings[Avg Pro Rating] =
+    AVERAGE ( dim_professional[AvgRating] )
+    FORMAT_STRING = "0.00"
+
+// Technicians who joined in the period, via the inactive JoinDate
+// relationship.
+MEASURE fact_bookings[New Pro Onboarding Count] =
+    CALCULATE (
+        COUNTROWS ( dim_professional ),
+        USERELATIONSHIP ( dim_professional[JoinDate], dim_date[Date] )
+    )
+    FORMAT_STRING = "#,0"
+
+// Technicians who have left the platform.
+MEASURE fact_bookings[Churned Pros] =
+    CALCULATE (
+        COUNTROWS ( dim_professional ),
+        dim_professional[IsActive] = 0
+    )
+    FORMAT_STRING = "#,0"
+
+// Demand signal minus opened capacity. Positive means more interest than
+// the roster can serve. VALID BY AREA AND DATE ONLY: fact_pro_capacity
+// carries no service key, so slicing this by service or category leaves
+// the capacity half unfiltered and the number becomes nonsense. Use it on
+// the area map and the area-by-month matrix, nowhere else.
+MEASURE fact_bookings[Supply Demand Gap] =
+    [Lead Volume] - [Slots Available]
+    FORMAT_STRING = "#,0"
+
+// Share of the roster that has passed background verification.
+MEASURE fact_bookings[Verified Pro Pct] =
+    DIVIDE (
+        CALCULATE ( COUNTROWS ( dim_professional ), dim_professional[IsBackgroundVerified] = 1 ),
+        [Roster Size]
+    )
+    FORMAT_STRING = "0.0%"
+
+// --------------------------------------------------------------------------
+// 07 ML Health
+// --------------------------------------------------------------------------
+
+// Mean of whatever primary metric the model in context reports. Units
+// differ by model, so only ever show this filtered to a single model.
+MEASURE fact_bookings[Metric Value Avg] =
+    AVERAGE ( fact_model_metrics[MetricValue] )
+    FORMAT_STRING = "0.000"
+
+// The model's target for its primary metric.
+MEASURE fact_bookings[Metric Goal Avg] =
+    AVERAGE ( fact_model_metrics[MetricGoal] )
+    FORMAT_STRING = "0.000"
+
+// Distinct models missing their goal in the period.
+MEASURE fact_bookings[Models In Breach] =
+    CALCULATE (
+        DISTINCTCOUNT ( fact_model_metrics[ModelKey] ),
+        fact_model_metrics[IsBreach] = 1
+    )
+    FORMAT_STRING = "#,0"
+
+// Share of model-days spent in breach.
+MEASURE fact_bookings[Breach Day Pct] =
+    AVERAGE ( fact_model_metrics[IsBreach] )
+    FORMAT_STRING = "0.0%"
+
+// Mean population stability index across models in context.
+MEASURE fact_bookings[Avg PSI Drift] =
+    AVERAGE ( fact_model_metrics[PSIDriftScore] )
+    FORMAT_STRING = "0.000"
+
+// Distinct models whose PSI has crossed the 0.25 alert threshold.
+MEASURE fact_bookings[Models Drifting] =
+    CALCULATE (
+        DISTINCTCOUNT ( fact_model_metrics[ModelKey] ),
+        fact_model_metrics[PSIDriftScore] > 0.25
+    )
+    FORMAT_STRING = "#,0"
+
+// Mean age of the training data behind live predictions. The measure that
+// would have caught the silent retrain failure in March 2026.
+MEASURE fact_bookings[Model Freshness Days] =
+    AVERAGE ( fact_model_metrics[TrainingDataAgeDays] )
+    FORMAT_STRING = "0"
+
+// Worst training-data age in context. Climbs from 15 March 2026 to 126
+// days.
+MEASURE fact_bookings[Max Training Data Age] =
+    MAX ( fact_model_metrics[TrainingDataAgeDays] )
+    FORMAT_STRING = "0"
+
+// Worst daily p95 serving latency in context.
+MEASURE fact_bookings[P95 Latency Ms] =
+    MAX ( fact_model_metrics[P95LatencyMs] )
+    FORMAT_STRING = "0"
+
+// Predictions served.
+MEASURE fact_bookings[Total Prediction Volume] =
+    SUM ( fact_model_metrics[PredictionVolume] )
+    FORMAT_STRING = "#,0"
+
+// Mean share of null feature values entering the models.
+MEASURE fact_bookings[Avg Feature Null Pct] =
+    AVERAGE ( fact_model_metrics[FeatureNullPct] )
+    FORMAT_STRING = "0.00"
+
+// Mean absolute percentage error of the demand forecaster. APE is stored
+// as a fraction so percent formatting works natively.
+MEASURE fact_bookings[Forecast MAPE] =
+    AVERAGE ( fact_forecast_accuracy[APE] )
+    FORMAT_STRING = "0.0%"
+
+// Volume-weighted absolute percentage error. More honest than MAPE when
+// many cells carry only one or two jobs.
+MEASURE fact_bookings[Forecast WAPE] =
+    DIVIDE (
+        SUM ( fact_forecast_accuracy[AbsError] ),
+        SUM ( fact_forecast_accuracy[ActualJobs] )
+    )
+    FORMAT_STRING = "0.0%"
+
+// Signed error. Positive means the model forecasts more demand than turns
+// up.
+MEASURE fact_bookings[Forecast Bias Pct] =
+    DIVIDE (
+        SUM ( fact_forecast_accuracy[ForecastedJobs] ) - SUM ( fact_forecast_accuracy[ActualJobs] ),
+        SUM ( fact_forecast_accuracy[ActualJobs] )
+    )
+    FORMAT_STRING = "+0.0%;-0.0%;0.0%"
+
+// Total jobs the forecaster expected.
+MEASURE fact_bookings[Forecasted Jobs] =
+    SUM ( fact_forecast_accuracy[ForecastedJobs] )
+    FORMAT_STRING = "#,0"
+
+// Total jobs that actually happened, on the forecast grain.
+MEASURE fact_bookings[Actual Jobs] =
+    SUM ( fact_forecast_accuracy[ActualJobs] )
+    FORMAT_STRING = "#,0"
+
+// Cells where the model forecast work that never arrived. The failure mode
+// worth staring at, because it is what pre-positions supply into empty
+// streets.
+MEASURE fact_bookings[Phantom Demand Cells] =
+    CALCULATE (
+        COUNTROWS ( fact_forecast_accuracy ),
+        fact_forecast_accuracy[ActualJobs] = 0
+    )
+    FORMAT_STRING = "#,0"
+
+// Mean absolute rupee error of the price engine against the final amount.
+MEASURE fact_bookings[Price Prediction MAE] =
+    CALCULATE (
+        AVERAGEX (
+            fact_bookings,
+            ABS ( fact_bookings[PredictedPriceINR] - fact_bookings[FinalAmountINR] )
+        ),
+        fact_bookings[BookingStatus] = "Completed"
+    )
+    FORMAT_STRING = "#,0"
+
+// Price engine error as a share of the amount actually charged.
+MEASURE fact_bookings[Price MAPE] =
+    CALCULATE (
+        AVERAGEX (
+            fact_bookings,
+            DIVIDE (
+                ABS ( fact_bookings[PredictedPriceINR] - fact_bookings[FinalAmountINR] ),
+                fact_bookings[FinalAmountINR]
+            )
+        ),
+        fact_bookings[BookingStatus] = "Completed"
+    )
+    FORMAT_STRING = "0.0%"
+
+// Root mean squared error in minutes of the arrival-time predictor.
+MEASURE fact_bookings[ETA RMSE] =
+    SQRT (
+        CALCULATE (
+            AVERAGEX (
+                fact_bookings,
+                ( fact_bookings[PredictedETAMins] - fact_bookings[ActualETAMins] ) ^ 2
+            ),
+            fact_bookings[BookingStatus] = "Completed"
+        )
+    )
+    FORMAT_STRING = "0.0"
+
+// Mean ranker confidence in the technician it chose.
+MEASURE fact_bookings[Match Score Avg] =
+    AVERAGE ( fact_bookings[MatchScore] )
+    FORMAT_STRING = "0.000"
+
+// Quoted value of bookings the detector flagged above 0.6. Not all of it
+// is genuine fraud, which is exactly why precision is the goal metric.
+MEASURE fact_bookings[Fraud Caught Value INR] =
+    CALCULATE (
+        SUM ( fact_bookings[QuotedAmountINR] ),
+        fact_bookings[FraudScore] > 0.6
+    )
+    FORMAT_STRING = "#,0"
+
+// Distinct customers whose latest churn score exceeds 0.7.
+MEASURE fact_bookings[High Churn Risk Customers] =
+    CALCULATE (
+        DISTINCTCOUNT ( fact_bookings[CustomerKey] ),
+        fact_bookings[ChurnRiskScore] > 0.7
+    )
+    FORMAT_STRING = "#,0"
+
+// --------------------------------------------------------------------------
+// 08 Utility
+// --------------------------------------------------------------------------
+
+// Traffic light for the model in context, honouring GoalDirection so a
+// lower MAPE and a higher AUC both read as good.
+MEASURE fact_bookings[Model KPI Status] =
+    VAR Value = [Metric Value Avg]
+    VAR Goal = [Metric Goal Avg]
+    VAR Direction = SELECTEDVALUE ( dim_model[GoalDirection], "HigherIsBetter" )
+    VAR Ratio = DIVIDE ( Value, Goal )
+    RETURN
+        SWITCH (
+            TRUE (),
+            ISBLANK ( Value ), "No Data",
+            Direction = "LowerIsBetter" && Ratio <= 0.90, "On Target",
+            Direction = "LowerIsBetter" && Ratio <= 1.00, "Watch",
+            Direction = "LowerIsBetter", "Breach",
+            Ratio >= 1.05, "On Target",
+            Ratio >= 1.00, "Watch",
+            "Breach"
+        )
+    FORMAT_STRING = "@"
+
+// Traffic light for service level against the 0.90 promise.
+MEASURE fact_bookings[SLA KPI Status] =
+    VAR Value = [SLA Met Pct]
+    RETURN
+        SWITCH (
+            TRUE (),
+            ISBLANK ( Value ), "No Data",
+            Value >= 0.90, "On Target",
+            Value >= 0.90 - 0.05, "Watch",
+            "Breach"
+        )
+    FORMAT_STRING = "@"
+
+// Hex colour to drive conditional formatting by field value. Matches
+// THEME.json.
+MEASURE fact_bookings[KPI Status Colour] =
+    SWITCH (
+        [SLA KPI Status],
+        "On Target", "#1B9E77",
+        "Watch", "#E6A700",
+        "Breach", "#D6455D",
+        "#8A8F98"
+    )
+    FORMAT_STRING = "@"
+
+// Dynamic page header reflecting the active area and date slicers.
+MEASURE fact_bookings[Ops Page Title] =
+    VAR AreaLabel =
+        IF (
+            ISFILTERED ( dim_area[AreaName] ),
+            CONCATENATEX ( VALUES ( dim_area[AreaName] ), dim_area[AreaName], ", " ),
+            "All Bengaluru"
+        )
+    RETURN
+        "Ops Control Room  |  " & AreaLabel & "  |  "
+            & FORMAT ( MIN ( dim_date[Date] ), "dd MMM yyyy" ) & " to "
+            & FORMAT ( MAX ( dim_date[Date] ), "dd MMM yyyy" )
+    FORMAT_STRING = "@"
+
+// Dynamic page header for the Demand Intelligence page.
+MEASURE fact_bookings[Demand Page Title] =
+    VAR CategoryLabel =
+        IF (
+            ISFILTERED ( dim_service[ServiceCategory] ),
+            CONCATENATEX ( VALUES ( dim_service[ServiceCategory] ), dim_service[ServiceCategory], ", " ),
+            "All categories"
+        )
+    RETURN
+        "Demand Intelligence  |  " & CategoryLabel & "  |  "
+            & FORMAT ( [Search to Booking Pct], "0.0%" ) & " search to booking"
+    FORMAT_STRING = "@"
+
+// Dynamic page header for the Supply Health page.
+MEASURE fact_bookings[Supply Page Title] =
+    "Supply Health  |  " & FORMAT ( [Active Pros], "#,0" ) & " active of "
+        & FORMAT ( [Roster Size], "#,0" ) & " on roster  |  "
+        & FORMAT ( [Pro Utilization Pct], "0.0%" ) & " utilisation"
+    FORMAT_STRING = "@"
+
+// Dynamic page header for the ML Model Health page.
+MEASURE fact_bookings[ML Page Title] =
+    VAR Breached = [Models In Breach]
+    RETURN
+        "ML Model Health  |  "
+            & IF ( Breached = 0, "all models on target", FORMAT ( Breached, "#,0" ) & " model(s) in breach" )
+            & "  |  " & FORMAT ( MAX ( dim_date[Date] ), "dd MMM yyyy" )
+    FORMAT_STRING = "@"
+
+// Human-readable label for the active date slicer.
+MEASURE fact_bookings[Selected Date Range Label] =
+    FORMAT ( MIN ( dim_date[Date] ), "dd MMM yyyy" ) & "  to  "
+        & FORMAT ( MAX ( dim_date[Date] ), "dd MMM yyyy" )
+    FORMAT_STRING = "@"
+
+// --------------------------------------------------------------------------
+// A DAX query must end in an EVALUATE. This one is a harmless receipt.
+// --------------------------------------------------------------------------
+EVALUATE
+ROW ( "Measures in library", 119 )
