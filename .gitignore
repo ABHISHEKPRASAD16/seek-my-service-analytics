@@ -102,3 +102,10 @@ secrets.toml
 # ---------------------------------------------------------------------------
 build/node_modules/
 build/package-lock.json
+
+# "build/" is ignored above for setuptools output, so the report generator has
+# to be re-included explicitly. The finished .docx and .pdf live in docs/.
+!build/
+build/*
+!build/build_report.js
+!build/to_pdf.ps1
