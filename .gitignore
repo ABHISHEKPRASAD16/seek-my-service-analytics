@@ -92,3 +92,13 @@ $RECYCLE.BIN/
 *.pem
 credentials.json
 secrets.toml
+
+# ---------------------------------------------------------------------------
+# Report build
+#
+# The generator script and its outputs are tracked; its dependencies are not.
+# `cd build && npm install docx && node build_report.js` reproduces the Word
+# file, and to_pdf.ps1 exports the PDF through Word.
+# ---------------------------------------------------------------------------
+build/node_modules/
+build/package-lock.json
