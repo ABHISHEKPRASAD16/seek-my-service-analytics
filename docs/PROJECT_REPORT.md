@@ -11,7 +11,7 @@ Operational Monitoring: A Marketplace Analytics Case Study
 
 **Institution:** IU Internationale Hochschule, Berlin, Germany
 
-**Submission Date:** *(to be completed)*
+**Submission Date:** *01/10/2026*
 
 ---
 
@@ -1295,7 +1295,7 @@ the accompanying repository; it does not represent any real organisation,
 individual or transaction, and this is stated in the artefact's documentation and
 user interface.
 
-*Signed:* ______________________  *Date:* ______________
+*Signed:* Abhishek Prasad  *Date:* 01/10/2026
 
 ---
 
