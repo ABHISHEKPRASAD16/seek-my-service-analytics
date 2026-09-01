@@ -31,11 +31,15 @@ data is the only way to lose this meeting badly.
 > I generated it.** There is no real Seek My Service and no real customer
 > records anywhere in this.
 >
-> That is deliberate. This is a rebuild of client work, and marketplace booking
-> data does not leave a client's environment — so rather than show you nothing,
-> I reconstructed the whole pipeline against data I generated to behave the same
-> way. Source schema, transformations, semantic model, dashboards, the ML
-> services, the monitoring. All of it real; only the rows are invented.
+> That is deliberate, and it is the point rather than a limitation. This was my
+> Master's thesis, and the question was whether monitoring can catch a silent
+> pipeline failure before accuracy shows it. To measure that you need a dataset
+> where you know exactly when the failure happened — real data does not come
+> labelled that way. So I generated one, broke it on a known date, and measured
+> which signal noticed first.
+>
+> Everything except the rows is the real thing: source schema, transformations,
+> semantic model, dashboards, the ML services, the monitoring.
 >
 > What is real is the structure. Twenty actual Bengaluru localities with the
 > right pincodes and zones. Both monsoons, not just the south-west one. The
@@ -308,11 +312,11 @@ the next piece of work.
 Both, and be precise about which is which. The *data* is generated — say that
 plainly, you have already said it once in minute one. The *architecture,* the
 modelling decisions, the measure library and the monitoring approach are the
-real thing, rebuilt from client work because the underlying data does not leave
-a client's environment. Offer to talk through the original engagement's approach
-without naming anything that belongs to someone else. A client who sees you
-protecting a previous client's data is watching you demonstrate exactly how you
-will treat theirs.
+real thing. The data is generated because the thesis needed a known failure date
+to measure detection against — you cannot prove a monitor caught something early
+if you do not know when it started. Say that plainly; it is a stronger answer
+than an apology, and it shows you designed an experiment rather than assembled a
+demo.
 
 **"Is this a real model or a picture of a model?"**
 Switch to the browser tab. `http://127.0.0.1:8001/docs`. Run a live prediction

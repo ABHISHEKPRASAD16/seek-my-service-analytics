@@ -3,16 +3,23 @@
 **A Power BI model, three ML services and a monitoring layer for a Bengaluru
 home-services marketplace.**
 
+*Master's thesis project · MSc Informatik · IU Internationale Hochschule, Berlin*
+
 ---
 
-> ### Read this first: a sanitised recreation, and why
+> ### Read this first: why the data is synthetic
 >
-> This is a **rebuild of client work against synthetic data**. Marketplace
-> booking data is exactly the kind of thing that cannot leave a client's
-> environment, so rather than show nothing, I reconstructed the whole pipeline —
-> source schema, transformations, semantic model, dashboards, ML services,
-> monitoring — against a dataset generated to have the same shape and the same
-> behaviour.
+> **The synthetic data is a methodological requirement, not a shortcut.**
+>
+> The thesis asks whether model-monitoring signals can detect a silent pipeline
+> failure *before* accuracy metrics degrade. Answering that needs a dataset in
+> which the failure is **injected at a known date**, so detection can be measured
+> against ground truth rather than argued about.
+>
+> Production data does not arrive labelled "the retrain job stopped working
+> here" — which is exactly the problem under study. So the failure is placed
+> deliberately: the retrain stops on 15 March 2026, the demand regime shifts on
+> 1 June, and the question is which signal moves first.
 >
 > There is no real company called Seek My Service, and **no real customer record
 > was used, seen, or inferred.** Every number in this document comes from
@@ -31,9 +38,11 @@ home-services marketplace.**
 > nobody paints in the rain. Where I made a judgement call, it is written down
 > in the README under Assumptions rather than left for someone to discover.
 >
-> If you want to discuss the original engagement, ask me directly — I can talk
-> through the approach and the decisions without sharing anything that belongs
-> to the client.
+> Everything else is built to production standards rather than to the standard
+> of a demonstration: 16 data-integrity checks gate the build, 109 tests cover
+> the pipeline, and the models report the metrics they actually scored — see
+> `MODEL_CARDS.md` for the two that came out badly and why they are documented
+> rather than tuned away.
 
 ---
 
@@ -75,7 +84,7 @@ production database, which is slow, dangerous, and different every time.
 
 Everything is reproducible from one fixed seed. `make all` rebuilds the entire
 dataset, revalidates it against 16 integrity checks, retrains all three models
-and runs 95 tests.
+and runs 109 tests.
 
 ---
 
@@ -250,7 +259,7 @@ ordinary October.
   bug during development: six technicians taking jobs after their churn date,
   caused by the same tenure calculation being written twice in slightly
   different ways.
-- **Tested.** 95 tests covering the seasonality window logic, the feature
+- **Tested.** 109 tests covering the seasonality window logic, the feature
   builders including explicit time-series leakage checks, and a smoke test per
   service. The service tests caught a genuine training-serving skew bug where a
   feature was added to training and not to inference.
